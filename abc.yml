@@ -1,0 +1,4 @@
+---
+- hosts: cassandraservers
+  roles: 
+   - cassandra
