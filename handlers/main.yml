@@ -1,0 +1,6 @@
+---
+#handler file for ansible-cassandra
+- name: restart and check
+  sudo: yes
+  shell: nohup bash -c "sleep 2s && reboot" &
+  register: reboot   

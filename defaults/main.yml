@@ -1,0 +1,6 @@
+---
+# vars file for ansible-cassandra
+yum_repos_path: /etc/yum.repos.d
+data_file_directories: /var/lib/cassandra/data
+commitlog_directory: /var/lib/cassandra/commitlog
+cluster_name: 'Test Cluster'

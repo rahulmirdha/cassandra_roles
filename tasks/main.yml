@@ -1,0 +1,64 @@
+- name: Copy Remote-To-Remote (from serverA to serverB)
+  copy:
+   src: /etc/yum.repos.d/cassandra.repo
+   dest: /etc/yum.repos.d/
+  become: yes
+
+- name: install cassandra
+  command: yum -y install cassandra
+  become: yes
+
+- name: give cassandra ownership right for data_directory 
+  command: sudo chown -R cassandra:cassandra {{data_file_directories}}
+  become: yes
+
+- name: give cassandra ownership right for commitlog
+  command: sudo chown -R cassandra:cassandra {{commitlog_directory}}
+  become: yes
+ 
+- name: enable cassndra on start
+  command:  /sbin/chkconfig cassandra on
+  become: yes
+
+- name: create swap memory
+  command: "{{item}}"
+  with_items:
+     - dd if=/dev/zero of=/root/swapfile bs=1024 count=2097152
+     - bash -c "sleep 15s"
+     - chmod 0600 /root/swapfile
+     - mkswap /root/swapfile
+     - swapon /root/swapfile
+  when: ansible_swaptotal_mb==0
+  become: yes
+  ignore_errors: yes
+- name: linefile command
+  lineinfile:
+         path: /etc/fstab
+         line: '/root/swapfile                            swap                    swap    defaults        0 0'
+  when: ansible_memfree_mb < 3500
+  become: yes
+  ignore_errors: yes
+- name: Copy config file
+  template:
+      src: /etc/ansible/roles/cassandra/templates/cassandra.yaml.j2
+      dest: /etc/cassandra/conf/cassandra.yaml
+  become: yes
+- name: reboot host
+  sudo: yes
+  shell: nohup bash -c "sleep 2s && reboot" &
+  register: reboot
+- name: wait for host boot
+  local_action:
+      module: wait_for
+      host: "{{ ansible_ssh_host }}"
+      port: 22
+      delay: "{{ boot_wait | default(60) }}"
+      timeout: 120
+      state: started
+  when: reboot.changed
+
+- name: check nodetool status
+  command: nodetool status
+  register: output
+- debug: "msg={{output.stdout}}"  
+
