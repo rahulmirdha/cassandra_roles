@@ -6,4 +6,4 @@
 
 ### Variables
 * edit vars/main.yml and change the ip of seeds (public ip)
-* edit defaulsts/main.yml according to your system paths
+* edit defaults/main.yml according to your system paths
